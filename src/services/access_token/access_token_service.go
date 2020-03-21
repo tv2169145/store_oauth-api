@@ -4,13 +4,13 @@ import (
 	"github.com/tv2169145/store_oauth-api/src/domain/access_token"
 	"github.com/tv2169145/store_oauth-api/src/repositories/db"
 	"github.com/tv2169145/store_oauth-api/src/repositories/rest"
-	"github.com/tv2169145/store_oauth-api/src/utils/errors"
+	"github.com/tv2169145/store_utils-go/rest_errors"
 )
 
 type Service interface {
-	GetById(string) (*access_token.AccessToken, *errors.RestErr)
-	Create(access_token.AccessTokenRequest) (*access_token.AccessToken, *errors.RestErr)
-	UpdateExpirationTime(access_token.AccessToken) *errors.RestErr
+	GetById(string) (*access_token.AccessToken, rest_errors.RestErr)
+	Create(access_token.AccessTokenRequest) (*access_token.AccessToken, rest_errors.RestErr)
+	UpdateExpirationTime(access_token.AccessToken) rest_errors.RestErr
 }
 
 type service struct {
@@ -25,9 +25,9 @@ func NewService(usersRepo rest.RestUsersRepository, dbRepo db.DbRepository) Serv
 	}
 }
 
-func (s *service) GetById(accessTokenId string) (*access_token.AccessToken, *errors.RestErr) {
+func (s *service) GetById(accessTokenId string) (*access_token.AccessToken, rest_errors.RestErr) {
 	if len(accessTokenId) == 0 {
-		return nil, errors.NewBadRequestError("invalid access token id")
+		return nil, rest_errors.NewBadRequestError("invalid access token id")
 	}
 	accessToken, err := s.dbRepo.GetById(accessTokenId)
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *service) GetById(accessTokenId string) (*access_token.AccessToken, *err
 	return accessToken, nil
 }
 
-func (s *service) Create(request access_token.AccessTokenRequest) (*access_token.AccessToken, *errors.RestErr) {
+func (s *service) Create(request access_token.AccessTokenRequest) (*access_token.AccessToken, rest_errors.RestErr) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (s *service) Create(request access_token.AccessTokenRequest) (*access_token
 	return &at, nil
 }
 
-func (s *service) UpdateExpirationTime(token access_token.AccessToken) *errors.RestErr {
+func (s *service) UpdateExpirationTime(token access_token.AccessToken) rest_errors.RestErr {
 	if err := token.Validate(); err != nil {
 		return err
 	}

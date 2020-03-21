@@ -3,7 +3,7 @@ package rest
 import (
 	"github.com/mercadolibre/golang-restclient/rest"
 	"github.com/tv2169145/store_oauth-api/src/domain/users"
-	"github.com/tv2169145/store_oauth-api/src/utils/errors"
+	"github.com/tv2169145/store_utils-go/rest_errors"
 	"gopkg.in/go-resty/resty.v2"
 	"time"
 )
@@ -17,7 +17,7 @@ var (
 )
 
 type RestUsersRepository interface {
-	LoginUser(string, string) (*users.User, *errors.RestErr)
+	LoginUser(string, string) (*users.User, rest_errors.RestErr)
 }
 
 type usersRepository struct {
@@ -33,7 +33,7 @@ func NewRepository() RestUsersRepository {
 	return &usersRepository{}
 }
 
-func (r *usersRepository) LoginUser(email, password string) (*users.User, *errors.RestErr) {
+func (r *usersRepository) LoginUser(email, password string) (*users.User, rest_errors.RestErr) {
 	request := users.UserLoginRequest{
 		Email: email,
 		Password: password,
@@ -62,14 +62,18 @@ func (r *usersRepository) LoginUser(email, password string) (*users.User, *error
 	// 使用 resty
 
 	successResult := users.User{}
-	errorResult := errors.RestErr{}
-	response, err := restyClient.R().SetBody(request).SetResult(&successResult).SetError(&errorResult).Post("/users/login")
+	//errorResult := rest_errors.GetRestErrorInstance()
+	response, err := restyClient.R().SetBody(request).SetResult(&successResult).SetError(rest_errors.GetRestErrorInstance()).Post("/users/login")
 	//fmt.Println(response, err, successResult, errorResult)
 	if err != nil {
-		return nil, errors.NewInternalServerError("invalid restclient response when trying to login user")
+		return nil, rest_errors.NewInternalServerError("invalid restclient response when trying to login user", err)
 	}
 	if response.StatusCode() > 299 {
-		return nil, &errorResult
+		apiErr, err := rest_errors.NewRestErrorFromBytes(response.Body())
+		if err != nil {
+			return nil, rest_errors.NewInternalServerError("invalid error interface when trying to login user", err)
+		}
+		return nil, apiErr
 	}
 	return &successResult, nil
 }

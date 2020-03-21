@@ -2,8 +2,8 @@ package access_token
 
 import (
 	"fmt"
-	"github.com/tv2169145/store_oauth-api/src/utils/errors"
 	"github.com/tv2169145/store_users-api/utils/crypto_utils"
+	"github.com/tv2169145/store_utils-go/rest_errors"
 	"strings"
 	"time"
 )
@@ -35,14 +35,14 @@ type AccessTokenRequest struct {
 	ClientSecret string `json:"client_secret"`
 }
 
-func(r *AccessTokenRequest) Validate() *errors.RestErr {
+func(r *AccessTokenRequest) Validate() rest_errors.RestErr {
 	switch r.GrantType {
 	case grantTypePassword:
 		break
 	case grandTypeClientCredentials:
 		break
 	default:
-		return errors.NewInternalServerError("invalid grant_type")
+		return rest_errors.NewBadRequestError("invalid grant_type")
 	}
 	//TODO Validate parameters for each grant_type
 	return nil
@@ -62,19 +62,19 @@ func GetNewAccessToken(userId int64) AccessToken {
 	}
 }
 
-func (at *AccessToken) Validate() *errors.RestErr {
+func (at *AccessToken) Validate() rest_errors.RestErr {
 	at.AccessToken = strings.TrimSpace(at.AccessToken)
 	if at.AccessToken == "" {
-		return errors.NewBadRequestError("invalid token id")
+		return rest_errors.NewBadRequestError("invalid token id")
 	}
 	if at.UserId <= 0 {
-		return errors.NewBadRequestError("invalid user id")
+		return rest_errors.NewBadRequestError("invalid user id")
 	}
 	if at.ClientId <= 0 {
-		return errors.NewBadRequestError("invalid client id")
+		return rest_errors.NewBadRequestError("invalid client id")
 	}
 	if at.Expires <= 0 {
-		return errors.NewBadRequestError("invalid expiration time")
+		return rest_errors.NewBadRequestError("invalid expiration time")
 	}
 	return nil
 }
